@@ -1,0 +1,8 @@
+global:
+  wildcardCertName: default-ingress-cert
+
+htpasswdUsers:
+  - admin
+  - free-user
+  - premium-user
+  - enterprise-user

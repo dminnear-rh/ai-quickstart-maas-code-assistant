@@ -1,0 +1,92 @@
+global:
+  wildcardCertName: cert-manager-ingress-cert
+
+clusterGroup:
+  name: prod
+
+  namespaces:
+    vault:
+    external-secrets-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    external-secrets:
+    openshift-lws-operator:
+      operatorGroup: true
+      targetNamespaces:
+        - openshift-lws-operator
+    cert-manager-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    redhat-ods-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    kuadrant-system:
+    grafana:
+    openshift-nfd:
+    nvidia-gpu-operator:
+
+  sharedValueFiles:
+    - /overrides/values-{{ $.Values.global.clusterPlatform }}.yaml
+
+  subscriptions:
+    eso:
+      name: openshift-external-secrets-operator
+      namespace: external-secrets-operator
+      channel: stable-v1
+    postgres:
+      name: cloudnative-pg
+      channel: stable-v1
+      source: certified-operators
+    devspaces:
+      name: devspaces
+    grafana:
+      name: grafana-operator
+      namespace: grafana
+      channel: v5
+      source: community-operators
+    lws:
+      name: leader-worker-set
+      channel: stable-v1.0
+    cert-manager:
+      name: openshift-cert-manager-operator
+      channel: stable-v1
+    kuadrant:
+      name: rhcl-operator
+    rhoai:
+      name: rhods-operator
+      channel: stable-3.3
+    nfd:
+      name: nfd
+      namespace: openshift-nfd
+    nvidia:
+      name: gpu-operator-certified
+      namespace: nvidia-gpu-operator
+      source: certified-operators
+
+  applications:
+    openshift-external-secrets:
+      name: openshift-external-secrets
+      namespace: external-secrets
+      chart: openshift-external-secrets
+      chartVersion: 0.0.*
+    vault:
+      name: vault
+      namespace: vault
+      chart: hashicorp-vault
+      chartVersion: 0.1.*
+    maas-scaffolding:
+      name: maas-scaffolding
+      path: charts/maas-scaffolding
+    maas-quickstart:
+      name: maas-quickstart
+      repoURL: https://github.com/dminnear-rh/maas-code-assistant.git
+      chartVersion: main
+      path: charts/maas-code-assistant
+      extraValueFiles:
+        - /overrides/maas-quickstart.yaml
+      ignoreDifferences:
+        - kind: Secret
+          name: grafana-proxy
+          namespace: grafana
+          jsonPointers:
+            - /data/session_secret

@@ -1,0 +1,77 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: openshift-default
+spec:
+  controllerName: "openshift.io/gateway-controller/v1"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: maas-default-gateway
+  namespace: openshift-ingress
+  labels:
+    opendatahub.io/managed: "false"
+  annotations:
+    opendatahub.io/managed: "false"
+    security.opendatahub.io/authorino-tls-bootstrap: "true"
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+spec:
+  gatewayClassName: openshift-default
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      hostname: maas.{{ .Values.global.localClusterDomain }}
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: maas.{{ .Values.global.localClusterDomain }}
+      tls:
+        certificateRefs:
+        - group: ""
+          kind: Secret
+          name: {{ .Values.global.wildcardCertName }}
+        mode: Terminate
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: kuadrant.io/v1beta1
+kind: Kuadrant
+metadata:
+  name: kuadrant
+  namespace: kuadrant-system
+---
+apiVersion: operator.openshift.io/v1
+kind: LeaderWorkerSetOperator
+metadata:
+  name: cluster
+  namespace: openshift-lws-operator
+spec:
+  logLevel: Normal
+  managementState: Managed
+  operatorLogLevel: Normal
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+ name: selfsigned-cluster-issuer
+spec:
+ selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: maas-ingress-cert
+  namespace: openshift-ingress
+spec:
+  secretName: {{ .Values.global.wildcardCertName }}
+  issuerRef:
+    name: selfsigned-cluster-issuer
+    kind: ClusterIssuer
+  dnsNames:
+    - maas.{{ .Values.global.localClusterDomain }}
