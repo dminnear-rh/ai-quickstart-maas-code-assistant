@@ -1,0 +1,16 @@
+global:
+  localClusterDomain: apps.example.com
+  users:
+    example-user: {}
+
+devspaces:
+  namespace: openshift-devspaces
+
+workspace:
+  namespacePrefix: wksp
+  devworkspace:
+    name: exercises
+    projects:
+      repoUrl: https://github.com/rh-ai-quickstart/maas-code-assistant.git
+      revision: main
+    image: registry.redhat.io/devspaces/udi-rhel9:3.25.0

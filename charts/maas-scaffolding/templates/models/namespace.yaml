@@ -1,0 +1,9 @@
+{{- if .Values.models }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.modelsNamespace }}
+  labels:
+    opendatahub.io/dashboard: "true"
+    {{- include "maas-scaffolding.labels" . | nindent 4 }}
+{{- end }}

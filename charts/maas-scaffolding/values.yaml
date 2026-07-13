@@ -1,8 +1,137 @@
 global:
-  wildcardCertName: default-ingress-cert
+  wildcardCertName: router-certs-default
+  toolsImage: image-registry.openshift-image-registry.svc:5000/openshift/tools:latest
 
-htpasswdUsers:
-  - admin
-  - free-user
-  - premium-user
-  - enterprise-user
+cnpg:
+  cluster:
+    name: maas
+    namespace: maas-db
+    instances: 1
+    storage:
+      size: 5Gi
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+
+dbSecret:
+  enabled: true
+  targetNamespace: redhat-ods-applications
+  targetSecretName: maas-db-config
+  targetSecretKey: DB_CONNECTION_URL
+  sourceSecretKey: uri
+  serviceAccountName: eso-db-secret-reader
+  refreshInterval: 30s
+
+modelsNamespace: llm
+defaultServingImage: registry.redhat.io/rhaii/vllm-cuda-rhel9:3.4.0
+models:
+  - name: nemotron-3-nano-30b-a3b
+    displayName: NVIDIA Nemotron 3 Nano 30B A3B FP8
+    uri: oci://quay.io/jharmison/models:redhatai--nvidia-nemotron-3-nano-30b-a3b-fp8-modelcar
+    hardwareProfile:
+      enabled: true
+      name: gpu
+      namespace: redhat-ods-applications
+    resources:
+      limits:
+        cpu: "4"
+        memory: 24Gi
+        nvidia.com/gpu: "1"
+      requests:
+        cpu: "2"
+        memory: 16Gi
+        nvidia.com/gpu: "1"
+    extraArgs:
+      - --max-model-len=131072
+      - --enable-auto-tool-choice
+      - --tool-call-parser=qwen3_coder
+      - --trust-remote-code
+      - --enable-force-include-usage
+      - --reasoning-parser-plugin=/mnt/models/nano_v3_reasoning_parser.py
+      - --reasoning-parser=nano_v3
+    tolerations:
+      - effect: NoSchedule
+        key: nvidia.com/gpu
+        operator: Exists
+
+subscriptions:
+  free:
+    displayName: Free Tier
+    groups:
+      - name: free
+    tokenRateLimits:
+      nemotron-3-nano-30b-a3b:
+        - limit: 10000
+          window: 1m
+    priority: 0
+  premium:
+    displayName: Premium Tier
+    groups:
+      - name: premium
+    tokenRateLimits:
+      nemotron-3-nano-30b-a3b:
+        - limit: 50000
+          window: 1m
+    priority: 1
+  enterprise:
+    displayName: Enterprise Tier
+    groups:
+      - name: enterprise
+    tokenRateLimits:
+      nemotron-3-nano-30b-a3b:
+        - limit: 200000
+          window: 1m
+    priority: 2
+
+hardwareProfiles:
+  gpu:
+    node:
+      tolerations:
+        - key: nvidia.com/gpu
+          effect: NoSchedule
+          operator: Exists
+    displayName: NVIDIA GPU
+    cpu:
+      min: 2
+      max: 6
+      default: 2
+    memory:
+      min: 2Gi
+      max: 48Gi
+      default: 16Gi
+    gpu:
+      nvidia.com/gpu:
+        max: 1
+        displayName: NVIDIA L40s
+
+dashboardConfig:
+  genAiStudio: true
+  modelAsService: true
+  maasAuthPolicies: true
+  observabilityDashboard: true
+
+clusterMonitoring:
+  enabled: true
+  config:
+    enableUserWorkload: true
+    prometheusK8s:
+      retention: 168h
+      volumeClaimTemplate:
+        spec:
+          volumeMode: Filesystem
+          resources:
+            requests:
+              storage: 40Gi
+  userConfig:
+    prometheus:
+      retention: 72h
+      volumeClaimTemplate:
+        spec:
+          volumeMode: Filesystem
+          resources:
+            requests:
+              storage: 40Gi

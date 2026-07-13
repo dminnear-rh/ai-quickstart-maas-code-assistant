@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: configure-authorino
+  namespace: kuadrant-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: configure-authorino
+rules:
+- apiGroups: ["kuadrant.io"]
+  resources: ["kuadrants"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["operator.authorino.kuadrant.io"]
+  resources: ["authorinos"]
+  verbs: ["get", "list", "create", "update", "patch"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "patch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: configure-authorino
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: configure-authorino
+subjects:
+  - kind: ServiceAccount
+    name: configure-authorino
+    namespace: kuadrant-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configure-authorino-script
+  namespace: kuadrant-system
+data:
+{{ (.Files.Glob "files/configure-authorino.*").AsConfig | indent 2 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: configure-authorino
+  namespace: kuadrant-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      serviceAccountName: configure-authorino
+      restartPolicy: Never
+      containers:
+        - name: configure-authorino
+          image: {{ .Values.global.toolsImage }}
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: ["/app/configure-authorino.sh"]
+          volumeMounts:
+            - name: configure-authorino-script
+              mountPath: /app
+      volumes:
+        - name: configure-authorino-script
+          configMap:
+            name: configure-authorino-script
+            defaultMode: 493

@@ -1,0 +1,9 @@
+clusterGroup:
+  subscriptions:
+    devspaces:
+      name: devspaces
+
+  applications:
+    code-assistant:
+      name: code-assistant
+      path: charts/maas-code-assistant
