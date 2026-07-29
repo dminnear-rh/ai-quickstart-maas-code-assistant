@@ -1,0 +1,30 @@
+global:
+  users:
+    free-user:
+      groups:
+        - free
+      clusterRoles:
+        - cluster-reader
+    premium-user:
+      groups:
+        - premium
+      clusterRoles:
+        - cluster-reader
+    enterprise-user:
+      groups:
+        - enterprise
+      clusterRoles:
+        - cluster-reader
+    admin:
+      groups:
+        - free
+        - premium
+        - enterprise
+      clusterRoles:
+        - cluster-admin
+
+clusterGroup:
+  applications:
+    user-config:
+      name: user-config
+      path: charts/user-config

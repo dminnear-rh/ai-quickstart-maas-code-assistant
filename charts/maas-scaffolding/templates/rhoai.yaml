@@ -1,46 +1,44 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.cnpg.cluster.name }}
+  namespace: {{ .Values.cnpg.cluster.namespace }}
+spec:
+  instances: {{ .Values.cnpg.cluster.instances }}
+  storage:
+    {{- toYaml .Values.cnpg.cluster.storage | nindent 4 }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.cluster.name }}
+      owner: {{ .Values.cnpg.cluster.name }}
+  {{- with .Values.cnpg.cluster.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
 apiVersion: datasciencecluster.opendatahub.io/v2
 kind: DataScienceCluster
 metadata:
   name: default-dsc
-  namespace: redhat-ods-operator
 spec:
   components:
-    aipipelines:
-      argoWorkflowsControllers:
-        managementState: Removed
-      managementState: Removed
     dashboard:
       managementState: Managed
-    feastoperator:
-      managementState: Removed
     kserve:
       managementState: Managed
       modelsAsService:
         managementState: Managed
-      nim:
-        managementState: Removed
-      rawDeploymentServiceConfig: Headless
-    kueue:
-      defaultClusterQueueName: default
-      defaultLocalQueueName: default
-      managementState: Removed
     llamastackoperator:
       managementState: Managed
-    mlflowoperator:
-      managementState: Removed
-    modelregistry:
-      managementState: Managed
-      registriesNamespace: rhoai-model-registries
-    ray:
-      managementState: Removed
-    trainingoperator:
-      managementState: Removed
-    trustyai:
-      eval:
-        lmeval:
-          permitCodeExecution: deny
-          permitOnline: deny
-      managementState: Managed
-    workbenches:
-      managementState: Managed
-      workbenchNamespace: rhods-notebooks
+---
+apiVersion: dscinitialization.opendatahub.io/v2
+kind: DSCInitialization
+metadata:
+  name: default-dsci
+spec:
+  monitoring:
+    metrics:
+      replicas: 1
+      storage:
+        retention: 90d
+        size: 5Gi

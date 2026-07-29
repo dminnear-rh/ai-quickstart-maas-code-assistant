@@ -6,7 +6,7 @@ clusterGroup:
         verbosity: -vvv
         extravars:
           - max_machineset_count=1
-          - machineset_replicas=2
+          - machineset_replicas=1
           - ensure_two_machine_minimum=false
           - machineset_name=nvidia-gpu
           - machineset_labels=

@@ -3,7 +3,27 @@ kind: GatewayClass
 metadata:
   name: openshift-default
 spec:
-  controllerName: "openshift.io/gateway-controller/v1"
+  controllerName: openshift.io/gateway-controller/v1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: maas-default-gateway-config
+  namespace: openshift-ingress
+data:
+  deployment: |
+    spec:
+      template:
+        spec:
+          containers:
+          - name: istio-proxy
+            resources:
+              limits:
+                cpu: "2"
+                memory: 2Gi
+              requests:
+                cpu: 100m
+                memory: 256Mi
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -15,17 +35,14 @@ metadata:
   annotations:
     opendatahub.io/managed: "false"
     security.opendatahub.io/authorino-tls-bootstrap: "true"
-    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
 spec:
   gatewayClassName: openshift-default
+  infrastructure:
+    parametersRef:
+      group: ""
+      kind: ConfigMap
+      name: maas-default-gateway-config
   listeners:
-    - name: http
-      port: 80
-      protocol: HTTP
-      hostname: maas.{{ .Values.global.localClusterDomain }}
-      allowedRoutes:
-        namespaces:
-          from: All
     - name: https
       port: 443
       protocol: HTTPS
@@ -45,6 +62,9 @@ kind: Kuadrant
 metadata:
   name: kuadrant
   namespace: kuadrant-system
+spec:
+  observability:
+    enable: true
 ---
 apiVersion: operator.openshift.io/v1
 kind: LeaderWorkerSetOperator
@@ -55,23 +75,3 @@ spec:
   logLevel: Normal
   managementState: Managed
   operatorLogLevel: Normal
----
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
- name: selfsigned-cluster-issuer
-spec:
- selfSigned: {}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: maas-ingress-cert
-  namespace: openshift-ingress
-spec:
-  secretName: {{ .Values.global.wildcardCertName }}
-  issuerRef:
-    name: selfsigned-cluster-issuer
-    kind: ClusterIssuer
-  dnsNames:
-    - maas.{{ .Values.global.localClusterDomain }}

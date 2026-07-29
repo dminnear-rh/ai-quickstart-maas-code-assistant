@@ -1,0 +1,70 @@
+global:
+  wildcardCertName: router-certs-default
+  toolsImage: image-registry.openshift-image-registry.svc:5000/openshift/tools:latest
+
+clusterGroup:
+  namespaces:
+    cloudnative-pg:
+      operatorGroup: true
+      targetNamespaces: []
+    openshift-cluster-observability-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    openshift-lws-operator:
+      operatorGroup: true
+      targetNamespaces:
+        - openshift-lws-operator
+    cert-manager-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    opentelemetry-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    kuadrant-system:
+      operatorGroup: true
+      targetNamespaces: []
+    redhat-ods-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    maas-db:
+
+  subscriptions:
+    cloudnative-pg:
+      name: cloudnative-pg
+      namespace: cloudnative-pg
+      channel: stable-v1
+      source: certified-operators
+    cluster-observability-operator:
+      name: cluster-observability-operator
+      namespace: openshift-cluster-observability-operator
+      csv: cluster-observability-operator.v1.4.0
+      installPlanApproval: Manual
+    leader-worker-set:
+      name: leader-worker-set
+      namespace: openshift-lws-operator
+      channel: stable-v1.0
+    openshift-cert-manager-operator:
+      name: openshift-cert-manager-operator
+      namespace: cert-manager-operator
+      channel: stable-v1
+    opentelemetry-product:
+      name: opentelemetry-product
+      namespace: opentelemetry-operator
+    rhcl-operator:
+      name: rhcl-operator
+      namespace: kuadrant-system
+    rhods-operator:
+      name: rhods-operator
+      namespace: redhat-ods-operator
+      channel: stable-3.4
+
+  applications:
+    maas-scaffolding:
+      name: maas-scaffolding
+      path: charts/maas-scaffolding
+      syncPolicy:
+        retry:
+          limit: 20
+        automated: {}
+        syncOptions:
+          - SkipDryRunOnMissingResource=true

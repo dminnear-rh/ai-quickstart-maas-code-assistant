@@ -1,0 +1,22 @@
+{{- $groups := dict }}
+{{- range $user, $config := .Values.global.users }}
+  {{- range $group := $config.groups }}
+    {{- $existing := get $groups $group | default list }}
+    {{- $_ := set $groups $group (append $existing $user) }}
+  {{- end }}
+{{- end }}
+{{- range $group, $members := $groups }}
+---
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: {{ $group }}
+  labels:
+    {{- include "user-config.labels" $ | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+users:
+  {{- range $members }}
+  - {{ . }}
+  {{- end }}
+{{- end }}

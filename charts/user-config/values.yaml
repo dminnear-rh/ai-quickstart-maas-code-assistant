@@ -1,0 +1,15 @@
+global:
+  users:
+    example-user:
+      groups:
+        - example-group
+      clusterRoles:
+        - cluster-reader
+
+secretStore:
+  name: vault-backend
+  kind: ClusterSecretStore
+
+htpasswd:
+  vaultKey: secret/data/global/htpasswd
+  refreshInterval: 12h0m0s
