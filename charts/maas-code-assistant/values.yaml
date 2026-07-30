@@ -1,7 +1,7 @@
 global:
   localClusterDomain: apps.example.com
-  users:
-    example-user: {}
+  users: {}
+    # example-user: {}
 
 devspaces:
   namespace: openshift-devspaces

@@ -1,10 +1,10 @@
 global:
-  users:
-    example-user:
-      groups:
-        - example-group
-      clusterRoles:
-        - cluster-reader
+  users: {}
+    # example-user:
+    #   groups:
+    #     - example-group
+    #   clusterRoles:
+    #     - cluster-reader
 
 secretStore:
   name: vault-backend
